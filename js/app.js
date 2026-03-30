@@ -52,30 +52,64 @@ const state = {
   aiLoading:     false,
 };
 
+// ─── roundRect polyfill (Safari < 15.4, older Android) ───────────────────────
+if (typeof CanvasRenderingContext2D !== 'undefined' &&
+    !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    const radius = Array.isArray(r) ? r[0] : (r || 0);
+    this.beginPath();
+    this.moveTo(x + radius, y);
+    this.lineTo(x + w - radius, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + radius);
+    this.lineTo(x + w, y + h - radius);
+    this.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    this.lineTo(x + radius, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - radius);
+    this.lineTo(x, y + radius);
+    this.quadraticCurveTo(x, y, x + radius, y);
+    this.closePath();
+  };
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!isOnboarded()) {
-    showOnboarding();
-  } else {
-    showApp();
-    navigate('home');
+  try {
+    if (!isOnboarded()) {
+      showOnboarding();
+    } else {
+      showApp();
+      navigate('home');
+    }
+  } catch (err) {
+    // Surface JS errors visibly instead of showing a blank screen
+    document.body.innerHTML = `
+      <div style="padding:32px;color:#ff6b6b;font-family:monospace;background:#0a0a0f;min-height:100vh">
+        <div style="font-size:32px;margin-bottom:12px">⚠️ Load Error</div>
+        <div style="font-size:14px;color:#fff;margin-bottom:8px">Please screenshot this and report it:</div>
+        <pre style="font-size:12px;color:#ffd93d;white-space:pre-wrap;word-break:break-all">${err.stack || err.message}</pre>
+      </div>`;
+    return;
   }
 
   // Bottom nav clicks
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
-      const view = btn.dataset.view;
-      if (view === 'more') { toggleDrawer(true); return; }
-      navigate(view);
+      try {
+        const view = btn.dataset.view;
+        if (view === 'more') { toggleDrawer(true); return; }
+        navigate(view);
+      } catch(e) { console.error('Nav error:', e); }
     });
   });
 
   // Drawer items
   document.querySelectorAll('.drawer-item').forEach(btn => {
     btn.addEventListener('click', () => {
-      toggleDrawer(false);
-      navigate(btn.dataset.view);
+      try {
+        toggleDrawer(false);
+        navigate(btn.dataset.view);
+      } catch(e) { console.error('Drawer error:', e); }
     });
   });
 
@@ -143,17 +177,25 @@ function toggleDrawer(open) {
 
 function renderView(view) {
   const content = document.getElementById('content');
-  switch (view) {
-    case 'home':     content.innerHTML = renderHome();     afterHome();     break;
-    case 'checkin':  content.innerHTML = renderCheckin();  afterCheckin();  break;
-    case 'habits':   content.innerHTML = renderHabits();   afterHabits();   break;
-    case 'rankings': content.innerHTML = renderRankings(); afterRankings(); break;
-    case 'coach':    content.innerHTML = renderCoach();    afterCoach();    break;
-    case 'progress': content.innerHTML = renderProgress(); afterProgress(); break;
-    case 'skills':   content.innerHTML = renderSkills();   afterSkills();   break;
-    case 'survey':   content.innerHTML = renderSurvey();   break;
-    case 'settings': content.innerHTML = renderSettings(); break;
-    default:         content.innerHTML = renderHome();     afterHome();
+  try {
+    switch (view) {
+      case 'home':     content.innerHTML = renderHome();     afterHome();     break;
+      case 'checkin':  content.innerHTML = renderCheckin();  afterCheckin();  break;
+      case 'habits':   content.innerHTML = renderHabits();   afterHabits();   break;
+      case 'rankings': content.innerHTML = renderRankings(); afterRankings(); break;
+      case 'coach':    content.innerHTML = renderCoach();    afterCoach();    break;
+      case 'progress': content.innerHTML = renderProgress(); afterProgress(); break;
+      case 'skills':   content.innerHTML = renderSkills();   afterSkills();   break;
+      case 'survey':   content.innerHTML = renderSurvey();   break;
+      case 'settings': content.innerHTML = renderSettings(); break;
+      default:         content.innerHTML = renderHome();     afterHome();
+    }
+  } catch (err) {
+    console.error('renderView error:', err);
+    content.innerHTML = `<div style="padding:24px;color:#ff6b6b;font-family:monospace">
+      <strong>View error (${view}):</strong><br>
+      <pre style="font-size:11px;white-space:pre-wrap;color:#ffd93d">${err.stack || err.message}</pre>
+    </div>`;
   }
 }
 
