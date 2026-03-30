@@ -36,8 +36,10 @@ import {
 } from './survey.js';
 
 import {
-  getLatestSurvey, getPreviousSurvey, getSurveys, getWeeklyHabitScore,
+  getLatestSurvey, getPreviousSurvey, getSurveys,
 } from './data.js';
+
+import { getWeeklyHabitScore } from './habits.js';
 
 // ─── App State ────────────────────────────────────────────────────────────────
 

@@ -7,8 +7,8 @@
 
 import { getProfile, getRecentDailyLogs, getTodayStr } from './data.js';
 import { getLatestSurvey, getCurrentWeekNumber } from './data.js';
-import { getActiveHabits, getTodayCompletion, getDetoxStatus } from './habits.js';
-import { calculatePercentiles, calculateOverallScore, getWeeklyHabitScore } from './scoring.js';
+import { getActiveHabits, getTodayCompletion, getDetoxStatus, getWeeklyHabitScore } from './habits.js';
+import { calculatePercentiles, calculateOverallScore } from './scoring.js';
 
 // ─── Claude API ──────────────────────────────────────────────────────────────
 
